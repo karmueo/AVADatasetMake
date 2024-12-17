@@ -3,6 +3,11 @@ import os
 import csv
 import cv2
 
+# 视频帧率
+FPS = 30
+# 视频帧间隔
+INTERVAL = 1
+
 # dict存放最后的json
 dicts = []
 # 通过循环与判断来找出via的json标注文件
@@ -10,10 +15,10 @@ for root, dirs, files in os.walk("./process_file/choose_frames_middle", topdown=
     for file in files:
         # via的json标注文件以_proposal.json结尾
         if "_finish.json" in file:
-            jsonPath = root + '/' + file
+            jsonPath = root + "/" + file
             index = 0
             # 读取标注文件
-            with open(jsonPath, encoding='utf-8') as f:
+            with open(jsonPath, encoding="utf-8") as f:
                 line = f.readline()
                 viaJson = json.loads(line)
                 # attributeNum1 = len(viaJson['attribute']['1']['options'])
@@ -23,37 +28,48 @@ for root, dirs, files in os.walk("./process_file/choose_frames_middle", topdown=
                 # attributeNums = [0, attributeNum1, attributeNum2, attributeNum3]
                 i = 0
                 attributeNums = [0]
-                for key in sorted(list(viaJson['attribute'].keys())):
-                    attributeNums.append(attributeNums[i] + len(viaJson['attribute'][key]['options']))
+                for key in sorted(list(viaJson["attribute"].keys())):
+                    attributeNums.append(
+                        attributeNums[i] + len(viaJson["attribute"][key]["options"])
+                    )
                     i += 1
 
                 files = {}
-                for file in viaJson['file']:
-                    fid = viaJson['file'][file]['fid']
-                    fname = viaJson['file'][file]['fname']
+                for file in viaJson["file"]:
+                    fid = viaJson["file"][file]["fid"]
+                    fname = viaJson["file"][file]["fname"]
                     files[fid] = fname
-                for metadata in viaJson['metadata']:
-                    imagen_x = viaJson['metadata'][metadata]
+                for metadata in viaJson["metadata"]:
+                    imagen_x = viaJson["metadata"][metadata]
                     # 获取人的坐标
-                    xy = imagen_x['xy'][1:]
+                    xy = imagen_x["xy"][1:]
                     # 获取vid，目的是让坐标信息与图片名称、视频名称对应
-                    vid = imagen_x['vid']
+                    vid = imagen_x["vid"]
                     fname = files[vid]
                     # 获取视频名称
-                    videoName = fname.split('_')[0]
+                    videoName = fname.split("_")[0]
                     # 获取视频帧ID
-                    frameId = int((int(fname.split('_')[1].split('.')[0]) - 1) / 30)
-                    for action in imagen_x['av']:
-                        avs = imagen_x['av'][action]
+                    frameId = int(
+                        (int(fname.split("_")[1].split(".")[0]) - 1) / INTERVAL
+                    )
+                    for action in imagen_x["av"]:
+                        avs = imagen_x["av"][action]
                         # 行为复选框不为空,获取复选框中的行为
-                        if avs != '':
+                        if avs != "":
                             # 一个复选框可能有多个选择
-                            avArr = avs.split(',')
+                            avArr = avs.split(",")
                             for av in avArr:
 
                                 # 获取坐标对应的图片，因为最后的坐标值需要在0到1
                                 # 就需要用现有坐标值/图片大小
-                                imgPath = root + '/' + videoName + "_" + str(frameId * 30 + 1).zfill(6) + '.jpg'
+                                imgPath = (
+                                    root
+                                    + "/"
+                                    + videoName
+                                    + "_"
+                                    + str(frameId * INTERVAL + 1).zfill(6)
+                                    + ".jpg"
+                                )
                                 imgTemp = cv2.imread(imgPath)  # 读取图片信息
                                 print(imgPath)
                                 sp = imgTemp.shape  # [高|宽|像素值由三种原色构成]
@@ -90,6 +106,6 @@ for root, dirs, files in os.walk("./process_file/choose_frames_middle", topdown=
 
                                 dicts.append(dict)
                     index = index + 1
-with open('./process_file/train_without_personID.csv', "w") as csvfile:
+with open("./process_file/train_without_personID.csv", "w") as csvfile:
     writer = csv.writer(csvfile)
     writer.writerows(dicts)

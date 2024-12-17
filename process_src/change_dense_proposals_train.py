@@ -1,12 +1,11 @@
 import pickle
 import numpy as np
-import csv
 import sys
 
 fix_pkl_file = sys.argv[1]
 
-f = open(fix_pkl_file, 'rb')
-info = pickle.load(f, encoding='iso-8859-1')
+f = open(fix_pkl_file, "rb")
+info = pickle.load(f, encoding="iso-8859-1")
 dense_proposals_train = {}
 
 for i in info:

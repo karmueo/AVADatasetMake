@@ -39,7 +39,7 @@ yolov5_det/labels -- dense_proposals_train.pkl & dense_proposals_train_deepsort.
 
 ## 06、via标注生成
 dense_proposals_train.pkl & choose_frames_middle -- _proposal.json
-- 修改./process_src/dense_proposals_train_to_via.py的第20行属性字典
+- 修改./process_src/dense_proposals_train_to_via.py的第28行属性字典
 ```shell
 ./process_src/06_via_gen.sh	
 ```

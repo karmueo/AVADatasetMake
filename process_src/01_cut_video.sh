@@ -17,7 +17,9 @@ do
     NEW_NAME=$(printf "%02d" $idx).mp4
     LEN_TIME=$(ffprobe -i ${IN_DATA_DIR}/${file} -show_entries format=duration -v quiet -of csv="p=0")
     k=11.0/$LEN_TIME
-    ffmpeg -i ${IN_DATA_DIR}/${file} -vf "setpts=PTS*$k" -r 30 -ss 0 -t 11 ${OUT_DATA_DIR}/${NEW_NAME} -y
+    # -r 30表示帧率为30，-ss 0表示从0秒开始，-t 11表示截取11秒
+    ffmpeg -i ${IN_DATA_DIR}/${file}  -r 30 -ss 0 -t 11 ${OUT_DATA_DIR}/${NEW_NAME} -y
+    # ffmpeg -i ${IN_DATA_DIR}/${file} -vf "setpts=PTS*$k" -r 30 -ss 0 -t 11 ${OUT_DATA_DIR}/${NEW_NAME} -y
     # if [ $(echo "$LEN_TIME < 11.0" | bc) -eq 1 ]; then
     #   echo "时长小于11秒"
     #   ffmpeg -i ${IN_DATA_DIR}/${file} -vf "setpts=PTS*$k" -r 30 -ss 0 -t 11 ${OUT_DATA_DIR}/${NEW_NAME} -y
@@ -26,6 +28,3 @@ do
     # fi
     idx=$((idx + 1))
 done
-
-
-

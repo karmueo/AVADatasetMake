@@ -2,6 +2,12 @@ import os
 import shutil
 import sys
 
+# 视频帧率
+FPS = 30
+
+# 视频帧间隔
+INTERVAL = 1
+
 # in_dir = "./process_file/choose_frames"
 # out_dir = "./process_file/choose_frames_middle"
 in_dir = str(sys.argv[1])
@@ -13,7 +19,7 @@ for filepath, dirnames, filenames in os.walk(in_dir):
         continue
 
     # 在choose_frames下创建对应的目录文件夹
-    temp_name = filepath.split('/')[-1]
+    temp_name = filepath.split("/")[-1]
     path_temp_name = os.path.join(out_dir, temp_name)
     if not os.path.exists(path_temp_name):
         os.makedirs(path_temp_name)
@@ -25,18 +31,20 @@ for filepath, dirnames, filenames in os.walk(in_dir):
             continue
         if "Store" in filename:
             continue
-        temp_num = filename.split('_')[1]
-        temp_num = temp_num.split('.')[0]
+        temp_num = filename.split("_")[1]
+        temp_num = temp_num.split(".")[0]
         temp_num = int(temp_num)
 
-        if (temp_num - 1) / 30 <= 1 or (temp_num - 1) / 30 >= len(filenames) - 2:
+        if (temp_num - 1) / INTERVAL <= 1 or (temp_num - 1) / INTERVAL >= len(
+            filenames
+        ) - 2:
             continue
         temp_num = str(temp_num)
         temp_num = temp_num.zfill(6)
         temp_num = temp_name + "_" + temp_num + ".jpg"
 
-        srcfile = filepath + '/' + temp_num
-        dstpath = path_temp_name + '/' + temp_num
+        srcfile = filepath + "/" + temp_num
+        dstpath = path_temp_name + "/" + temp_num
         # 复制文件
         shutil.copy(srcfile, dstpath)
         # print(dstpath)

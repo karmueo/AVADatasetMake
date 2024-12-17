@@ -2,8 +2,11 @@ import argparse
 import sys
 import csv
 
+# 视频帧间隔
+INTERVAL = 1
+
 # sys.path.append('..') #目的是为了导入上一级的yolov5
-sys.path.insert(0, './process_src/yolovDeepsort/yolov5/')
+sys.path.insert(0, "./process_src/yolovDeepsort/yolov5/")
 
 from yolov5.utils.datasets import LoadImages
 from yolov5.utils.general import check_img_size, xyxy2xywh
@@ -34,31 +37,43 @@ def detect(opt):
 
     # 这里是avaMin_dense_proposals_train.pkl的路径，
     # 但是之后要使用via标注之后的avaMin_train.csv，因为在微调之后，坐标数量与坐标位置会发生变化
-    f = open(opt.deepsort_pkl, 'rb')
-    info = pickle.load(f, encoding='iso-8859-1')
+    f = open(opt.deepsort_pkl, "rb")
+    info = pickle.load(f, encoding="iso-8859-1")
 
     # tempFileName 用以记录当前所处文件（或者视频），如果读取到下一个文
     # 件（或者视频），则tempFileName更换为下一个文件名，然后deepsort重新开始检测
-    tempFileName = ''
+    tempFileName = ""
 
     # 循环 pkl中的信息
     for i in info:
         dets = info[i]
-        tempName = i.split(',')
+        tempName = i.split(",")
 
         # 如果新开启一个文件（或者视频），deepsort重写开始检测
         if tempName[0] != tempFileName:
-            deepsort = DeepSort(opt.deep_sort_weights,
-                                max_dist=cfg.DEEPSORT.MAX_DIST, min_confidence=cfg.DEEPSORT.MIN_CONFIDENCE,
-                                max_iou_distance=cfg.DEEPSORT.MAX_IOU_DISTANCE,
-                                max_age=cfg.DEEPSORT.MAX_AGE, n_init=cfg.DEEPSORT.N_INIT,
-                                nn_budget=cfg.DEEPSORT.NN_BUDGET,
-                                use_cuda=True)
+            deepsort = DeepSort(
+                opt.deep_sort_weights,
+                max_dist=cfg.DEEPSORT.MAX_DIST,
+                min_confidence=cfg.DEEPSORT.MIN_CONFIDENCE,
+                max_iou_distance=cfg.DEEPSORT.MAX_IOU_DISTANCE,
+                max_age=cfg.DEEPSORT.MAX_AGE,
+                n_init=cfg.DEEPSORT.N_INIT,
+                nn_budget=cfg.DEEPSORT.NN_BUDGET,
+                use_cuda=True,
+            )
             tempFileName = tempName[0]
 
         # 读取当前标注信息所对应的图片
         tempImg = cv2.imread(
-            source + '/' + tempName[0] + '/' + tempName[0] + '_' + str(int(tempName[1]) * 30 + 1).zfill(6) + '.jpg')
+            source
+            + "/"
+            + tempName[0]
+            + "/"
+            + tempName[0]
+            + "_"
+            + str(int(tempName[1]) * INTERVAL + 1).zfill(6)
+            + ".jpg"
+        )
         # 获取图片的大小
         imgsz = tempImg.shape
 
@@ -72,16 +87,16 @@ def detect(opt):
             xyxys[index][1] = det[1] * imgsz[0]
             xyxys[index][2] = det[2] * imgsz[1]
             xyxys[index][3] = det[3] * imgsz[0]
-            confs[index] = (float(det[4]))
-            clss[index] = 0.
+            confs[index] = float(det[4])
+            clss[index] = 0.0
 
         xywhs = xyxy2xywh(xyxys)
 
         # 由于标注信息是每隔 30帧检测一次，导致送入deep sort的检测数量减少
         # 所以增加送入deep sort的帧
         # 增加策略：讲当前帧的前面第10帧与后面第10帧送入检测，
-        # 即送入：当前帧-10，当前帧，当前帧+10 
-        '''
+        # 即送入：当前帧-10，当前帧，当前帧+10
+        """
         im0Path = source + '/' + tempName[0] + '/'+ tempName[0] + '_' + str(int(tempName[1])*30+1).zfill(6) + '.jpg'
         im0 = np.array(Image.open(im0Path))
         
@@ -100,9 +115,17 @@ def detect(opt):
         print("outputs3",outputs)
         print("im0sub10Path",im0sub10Path)
         input()
-        '''
-        im0Path = source + '/' + tempName[0] + '/' + tempName[0] + '_' + str(int(tempName[1]) * 30 + 1).zfill(
-            6) + '.jpg'
+        """
+        im0Path = (
+            source
+            + "/"
+            + tempName[0]
+            + "/"
+            + tempName[0]
+            + "_"
+            + str(int(tempName[1]) * INTERVAL + 1).zfill(6)
+            + ".jpg"
+        )
         im0 = np.array(Image.open(im0Path))
         outputs = deepsort.update(xywhs, confs, clss, im0)
 
@@ -125,23 +148,44 @@ def detect(opt):
             writer.writerows(dicts)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--deep_sort_weights', type=str,
-                        default='process_src/yolovDeepsort/deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7',
-                        help='ckpt.t7 path')
+    parser.add_argument(
+        "--deep_sort_weights",
+        type=str,
+        default="process_src/yolovDeepsort/deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7",
+        help="ckpt.t7 path",
+    )
     # file/folder, 0 for webcam
-    parser.add_argument('--source', type=str,
-                        default='process_file/frames', help='source')
-    parser.add_argument('--output', type=str,
-                        default='process_file/train_personID.csv', help='output file')  # output folder
-    parser.add_argument('--save-txt', action='store_true', help='save MOT compliant results to *.txt')
+    parser.add_argument(
+        "--source", type=str, default="process_file/frames", help="source"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="process_file/train_personID.csv",
+        help="output file",
+    )  # output folder
+    parser.add_argument(
+        "--save-txt", action="store_true", help="save MOT compliant results to *.txt"
+    )
     # class 0 is person, 1 is bycicle, 2 is car... 79 is oven
-    parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 16 17')
-    parser.add_argument("--config_deepsort", type=str,
-                        default="process_src/yolovDeepsort/deep_sort_pytorch/configs/deep_sort.yaml")
-    parser.add_argument("--deepsort_pkl", type=str,
-                        default="process_file/dense_proposals_train_deepsort.pkl")
+    parser.add_argument(
+        "--classes",
+        nargs="+",
+        type=int,
+        help="filter by class: --class 0, or --class 16 17",
+    )
+    parser.add_argument(
+        "--config_deepsort",
+        type=str,
+        default="process_src/yolovDeepsort/deep_sort_pytorch/configs/deep_sort.yaml",
+    )
+    parser.add_argument(
+        "--deepsort_pkl",
+        type=str,
+        default="process_file/dense_proposals_train_deepsort.pkl",
+    )
 
     opt = parser.parse_args()
     with torch.no_grad():
